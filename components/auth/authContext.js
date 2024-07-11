@@ -1,69 +1,82 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 const AuthContext = createContext();
-
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(null);
-    const [user, setUser] = useState(null);
 
-    useEffect(() => {
-        const loadAuthData = async () => {
-            try {
-                const storedToken = await AsyncStorage.getItem('authToken');
-                const storedUser = await AsyncStorage.getItem('userData');
-                if (storedToken) {
-                    setToken(storedToken);
-                }
-                if (storedUser) {
-                    setUser(JSON.parse(storedUser));
-                }
-            } catch (error) {
-                console.error('Failed to load auth data:', error);
-                // Handle error as needed, e.g., redirect to login screen
-            }
-        };
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [postid,setPostid]=useState(null);
+  const [loading, setLoading] = useState(true);
 
-        loadAuthData();
-    }, []);
+  useEffect(() => {
+    const loadStoredData = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        const storedUser = await AsyncStorage.getItem("user");
+        const storedPostid = await AsyncStorage.getItem("postid");
 
-    const saveToken = async (tokenValue) => {
-        try {
-            await AsyncStorage.setItem('authToken', tokenValue);
-            setToken(tokenValue);
-        } catch (error) {
-            console.error('Failed to save token:', error);
-            // Handle error as needed
+        if (storedToken) {
+          setToken(storedToken);
         }
-    };
-
-    const clear = async () => {
-        try {
-            await AsyncStorage.removeItem('authToken');
-            await AsyncStorage.removeItem('userData');
-            setToken(null);
-            setUser(null);
-        } catch (error) {
-            console.error('Failed to clear auth data:', error);
-            // Handle error as needed
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
-    };
-
-    const saveUser = async (userData) => {
-        try {
-            await AsyncStorage.setItem('userData', JSON.stringify(userData));
-            setUser(userData);
-        } catch (error) {
-            console.error('Failed to save user data:', error);
-            // Handle error as needed
+        if(storedPostid){
+          setPostid(JSON.parse(storedPostid));
         }
+        
+      } catch (error) {
+        console.log("Error loading stored data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
+    loadStoredData();
+  }, []);
 
-    return (
-        <AuthContext.Provider value={{ token, user, saveToken, clear, saveUser }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  const saveToken = async (token) => {
+    try {
+      setToken(token);
+      await AsyncStorage.setItem("token", token);
+    } catch (error) {
+      console.log("Error saving token:", error);
+    }
+  };
+
+  const clear = async () => {
+    try {
+      setToken(null);
+      setUser(null);
+      setPostid(null);
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+    } catch (error) {
+      console.log("Error clearing token:", error);
+    }
+  };
+
+  const saveUser = async (userData) => {
+    try {
+      setUser(userData);
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
+    } catch (error) {
+      console.log("Error saving user data:", error);
+    }
+  };
+
+  const savePostid = async (id) => {
+    try {
+      setPostid(id);
+      await AsyncStorage.setItem("postid", JSON.stringify(id));
+    } catch (error) {
+      console.log("Error saving user data:", error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ token, user,postid, saveToken, clear, saveUser,savePostid, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
-
 export const useAuth = () => useContext(AuthContext);

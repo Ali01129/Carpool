@@ -2,9 +2,22 @@ import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import car from '../../images/frame3.png';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../auth/authContext';
 
 export default function Second (){
     const navigation=useNavigation();
+    const { token, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading) {
+      if (token) {
+        navigation.replace("Drawer");
+      } else {
+        navigation.replace("Login");
+      }
+    }
+  }, [loading, token, navigation]);
+
   return (
     <View style={styles.container}>
       <Image source={car} style={styles.logo}/>

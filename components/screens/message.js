@@ -1,66 +1,118 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, Image,TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import MessageCard from '../helper/messageCard';
-import { useEffect } from 'react';
 import { useAuth } from '../auth/authContext';
-
-const people = [
-  { id: '1', name: 'Mollie Austin', message: "Really? That's great...", time: '2:34pm', avatar: 'https://via.placeholder.com/50' },
-  { id: '2', name: 'Charlie Sharp', message: 'Where do you go?', time: '1:23pm', avatar: 'https://via.placeholder.com/50' },
-  { id: '3', name: 'Maude McKinney', message: 'Amazing job!', time: '9:12am', avatar: 'https://via.placeholder.com/50' },
-  { id: '4', name: 'Samuel Carlson', message: 'Ok!', time: '8:20am', avatar: 'https://via.placeholder.com/50' },
-  { id: '5', name: 'Hattie Brewer', message: 'Congratulations 😁', time: '8:20am', avatar: 'https://via.placeholder.com/50' },
-  { id: '6', name: 'Eunice Diaz', message: "I'm ok", time: '7:17am', avatar: 'https://via.placeholder.com/50' },
-];
+import MessageItem from '../helper/messageItem';
 
 export default function Message() {
-  const navigation=useNavigation();
-  const [val, setVal] = React.useState([]);
-  const {token}=useAuth();
-  // useEffect(() => {
-  //   getData();
-  // }, [val]);
+  const navigation = useNavigation();
+  const { token, postid,user } = useAuth();
+  const [thread, setThread] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sendMsg, setSendMsg] = useState('');
 
-  // const getData = async () => {
-  //     try {
-  //         const response = await fetch('https://carpool.qwertyexperts.com/api/thread/list', {
-  //             method: 'GET',
-  //             headers: {
-  //                 'Authorization': `Bearer ${token}`,
-  //             },
-  //         });
-  //         const data = await response.json();
-  //         console.log(data);
-  //         if (response.ok) {
-  //             setVal(data.result.data);
-  //         }
-  //     } catch (error) {
-  //         console.error('Error fetching data:', error);
-  //     }
-  // };
 
+  useEffect(() => {
+    if (postid) {
+      getData();
+    }
+  }, [postid]);
+
+  useEffect(() => {
+    if (thread) {
+      getMsg();
+    }
+  }, [thread,messages]);
+
+  const getData = async () => {
+    try {
+      const response = await fetch(`https://carpool.qwertyexperts.com/api/thread/show/${postid}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      console.log("getData function", "\n", data, "\n");
+      if (response.ok) {
+        setThread(data.result._id);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getMsg = async () => {
+    try {
+      const response = await fetch(`https://carpool.qwertyexperts.com/api/message/list/${thread}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        
+        setMessages(data.result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const send = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`https://carpool.qwertyexperts.com/api/message/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ thread: thread, message: sendMsg }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Message sent');
+        setSendMsg('');
+        getMsg();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-        <View style={{flexDirection:'row',marginBottom:20}}>
-            <TouchableOpacity style={{backgroundColor:'#1E90FF',borderRadius:50,width:50,height:50,justifyContent:'center',marginBottom:10}} 
-            onPress={()=>{navigation.goBack();}}>
-                <Ionicons style={{alignSelf:'center'}} name='arrow-back' size={30} color={'white'}/>
-            </TouchableOpacity>
-            <View style={{flex:1}}>
-                <Text style={{fontWeight:'bold',textAlign:'center',fontSize:20}}>Messages</Text>
+        <View>
+            <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+                <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => { navigation.goBack(); }}>
+                <Ionicons style={{ alignSelf: 'center' }} name='arrow-back' size={30} color={'white'} />
+                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                <Text style={styles.headerText}>Messages</Text>
+                </View>
+            </View>
+            {messages.slice(0).reverse().map((item, index) => (
+              user.email === item.userFrom.email ? (
+                <MessageItem key={index} msg={item.message} flex={'flex-end'} color={'#1E90FF'}/>
+              ) : <MessageItem key={index} msg={item.message} flex={'flex-start'} color={'black'}/>
+            ))}
+        </View>
+        <View>
+            <View style={styles.messageInputContainer}>
+                <TextInput style={styles.textInput} placeholder='Message' value={sendMsg} onChangeText={(text) => setSendMsg(text)}/>
+                <Ionicons style={{ alignSelf: 'center' }} name='send' size={30} color={'#1E90FF'} onPress={send}/>
             </View>
         </View>
-
-      <FlatList
-        data={people}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <MessageCard item={item} />
-        )}
-      />
     </View>
   );
 }
@@ -70,12 +122,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#E6E6E6',
     padding: 20,
-    marginTop:60,
+    marginTop: 60,
+    justifyContent:'space-between',
   },
-  searchContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 10,
+  backButton: {
+    backgroundColor: '#1E90FF',
+    borderRadius: 50,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
     marginBottom: 10,
+  },
+  headerText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 20,
+  },
+  messageInputContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+  },
+  textInput: {
+    flex: 1,
   },
 });

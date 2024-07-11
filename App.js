@@ -12,8 +12,8 @@ import CardItem from './components/helper/cardItem';
 import Request from './components/screens/request';
 import RequestCard from './components/helper/requestCard';
 import { AuthProvider } from './components/auth/authContext';
-import MessageCard from './components/helper/messageCard';
 import MessageItem from './components/helper/messageItem';
+import Message from './components/screens/message';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,7 +45,7 @@ export default function App() {
                     <Stack.Screen name="Request" component={Request} options={{ headerShown: false }} />
                     <Stack.Screen name="CardItem" component={CardItem} options={{ headerShown: false }} />
                     <Stack.Screen name="RequestCard" component={RequestCard} options={{ headerShown: false }} />
-                    <Stack.Screen name="MessageCard" component={MessageCard} options={{ headerShown: false }} />
+                    <Stack.Screen name="Message" component={Message} options={{ headerShown: false }} />
                     <Stack.Screen name="MessageItem" component={MessageItem} options={{ headerShown: false }} />
                 </Stack.Navigator>
             </NavigationContainer>

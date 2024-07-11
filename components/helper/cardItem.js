@@ -12,7 +12,7 @@ export default function CardItem({ route }) {
     const { name, dtime, atime, seats,avseats, to, from, id } = route.params;
     const navigation = useNavigation();
     const [modalVisible, setModalVisible] = useState(false);
-    const { token } = useAuth();
+    const { token,savePostid } = useAuth();
 
     const validationSchema = Yup.object().shape({
         numSeats: Yup.number().required('Number of seats is required').min(1, 'Number of seats must be at least 1').max(avseats, `Number of seats must be less than or equal to ${avseats}`),
@@ -31,10 +31,11 @@ export default function CardItem({ route }) {
             });
             const data = await response.json();
             if(!response.ok){
-                Alert.alert('Request SucessFull', data.message);
+                Alert.alert('Request Failed', data.message);
             }
             else{
-                Alert.alert('Request Failed', data.message);
+                Alert.alert('Request SucessFull', data.message);
+                savePostid(id);
             }
         }catch(error){
             Alert.alert('Request Failed', 'An error occurred. Please try again.');

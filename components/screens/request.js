@@ -19,7 +19,7 @@ export default function Request() {
 
   const getData = async () => {
     try {
-      const response = await fetch(`https://carpool.qwertyexperts.com/api/requests/list?userId=${user._id}`, {
+      const response = await fetch(`https://carpool.qwertyexperts.com/api/requests/list`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -66,7 +66,7 @@ export default function Request() {
           </View>
           <Image source={car} style={styles.image} />
           {val.map((item, index) => {
-            if (item.post.status !== 'Booked') {
+            if (item.post.status !== 'Booked'&&item.from._id!==user._id) {
               return (
                 <RequestCard
                   key={index}
@@ -75,7 +75,7 @@ export default function Request() {
                   to={item.post.to}
                   email={item.from.email}
                   time={item.post.departureTime + ' to ' + item.post.arrivalTime}
-                  seats={item.post.totalSeats}
+                  seats={item.post.availableSeats}
                   postid={item.post._id}
                 />
               );

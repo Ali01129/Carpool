@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text,StyleSheet,Image,TouchableOpacity,Alert } from 'react-native';
 import { useAuth } from '../auth/authContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function RequestCard(props) {
     const {name,from,to,email,time,seats,postid}=props;
-    const {token}=useAuth();
+    const {token,savePostid}=useAuth();
+    const navigation = useNavigation();
 
     const submit = async () => {
         try {
@@ -12,19 +14,25 @@ export default function RequestCard(props) {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    status:"Booked",
+                    "status": "Booked"
                 }),
             });
             const data = await response.json();
             if (response.ok) {
                 Alert.alert('Note', data.message);
+                savePostid(data.result._id);
+                navigation.navigate('Message');
+            } else {
+                Alert.alert('Accept Request Failed', data.message || 'Failed to update status');
             }
         } catch (error) {
-            Alert.alert('Accept Request Failed', error);
+            Alert.alert('Accept Request Failed', error.toString());
         }
     };
+    
 
     return (
         <View style={styles.box}>
